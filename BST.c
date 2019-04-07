@@ -11,6 +11,7 @@
 #define TREE_IS_EMPTY(rt) ( !(rt) ? 1 : 0 )
 #define THIS_NODE_IS_LEAF(nd) ( !( (nd) -> left ) ? ( !( (nd) -> right ) ? 1 : 0 ) : 0 )
 #define CURRENT_NODE_IS_BIGGER(cn, an) ( (cn) -> value > (an) -> value ? 1 : 0 )
+#define EXCEED_THE_TREE(nd) ( !(nd) ? 1 : 0 )
 
 #define LEFT_IS_EMPTY(nd) ( (nd) -> left ? 0 : 1 )
 #define RIGHT_IS_EMPTY(nd) ( (nd) -> right ? 0 : 1 )
@@ -29,18 +30,18 @@ typedef struct _node{
 } Node;
 
 node_ptr initTree();
-void addNodeWithThisValue(node_ptr to_be_added_node, node_ptr current_node_ptr);     //why returns node_ptr??
+void addNodeWithThisValue(node_ptr to_be_added_node, node_ptr current_node_ptr);
 void printTreeIn2D(node_ptr root, int space);
 void retrieve(node_ptr current_node_ptr, int mode);
 void preOrderPrint(node_ptr current_node_ptr);
 void inOrderPrint(node_ptr current_node_ptr);
 void postOrderPrint(node_ptr current_node_ptr);
 void deleteTree(int data, node_ptr root);
-int searchByPre(node_ptr to_find, node_ptr current_node_ptr, int level);
+node_ptr searchByPre(node_ptr to_find, node_ptr current_node_ptr, int *level);
 
 int main(void)
 {
-    int choice, tmp, mode;
+    int choice, tmp, mode, level;
     char *str1 = "Preorder";
     char *str2 = "Inorder";
     char *str3 = "Postorder";
@@ -77,9 +78,10 @@ int main(void)
                 scanf("%d", &(tmp_node -> value));
                 printf("\n\n");
                 
-                if(tmp = searchByPre(tmp_node, root, 1))   // if the node already exist
+                level = 0;
+                if(searchByPre(tmp_node, root, &level))   // if the node already exist
                 {
-                    printf("Already Existed in level %d...\n\n", tmp);
+                    printf("Already Existed in level %d...\n\n", level);
                     
                     break;
                 }
@@ -124,8 +126,8 @@ int main(void)
                 printf("Type the value of the node to find ");
                 scanf("%d", &(tmp_node -> value));
                 
-                tmp = searchByPre(tmp_node, root, 1);
-                if(tmp) printf("\nIt is in level %d\n\n", tmp);
+                level = 0;
+                if(searchByPre(tmp_node, root, &level)) printf("\nIt is in level %d\n\n", level);
                 else printf("Not found...\n\n");
                 
                 break;
@@ -164,23 +166,24 @@ node_ptr initTree(node_ptr root)
     scanf("%d", &(root -> value));
     
     printf("\n\n");
-    
     return root;
 }
 
-int searchByPre(node_ptr to_find, node_ptr current_node_ptr, int level)
+node_ptr searchByPre(node_ptr to_find, node_ptr current_node_ptr, int *level)
 {
-    if(!current_node_ptr) return 0;
+    *level = *level + 1;
     
-    if(FOUND_DATA(to_find, current_node_ptr)) return level;
+    if(EXCEED_THE_TREE(current_node_ptr)) return NULL;
+    
+    if(FOUND_DATA(to_find, current_node_ptr)) return current_node_ptr;
     
     if(!THIS_NODE_IS_LEAF(current_node_ptr))
     {
-        if(CURRENT_NODE_IS_BIGGER(current_node_ptr, to_find)) return searchByPre(to_find, current_node_ptr -> left, level + 1);
-        else return searchByPre(to_find, current_node_ptr -> right, level + 1);
+        if(CURRENT_NODE_IS_BIGGER(current_node_ptr, to_find)) return searchByPre(to_find, current_node_ptr -> left, level);
+        else return searchByPre(to_find, current_node_ptr -> right, level);
     }
     
-    return 0;
+    return NULL;
 }
 
 // 1. parameter name changed : "root" to "current_node_ptr"  &  "data" to "to_insert"
@@ -244,7 +247,7 @@ void retrieve(node_ptr current_node_ptr, int mode)
 
 void preOrderPrint(node_ptr current_node_ptr)
 {
-    if(current_node_ptr)
+    if(!EXCEED_THE_TREE(current_node_ptr))
     {
         printf("%d ", current_node_ptr -> value);
         preOrderPrint(current_node_ptr -> left);
@@ -255,7 +258,7 @@ void preOrderPrint(node_ptr current_node_ptr)
 
 void inOrderPrint(node_ptr current_node_ptr)
 {
-    if(current_node_ptr)
+    if(!EXCEED_THE_TREE(current_node_ptr))
     {
         preOrderPrint(current_node_ptr -> left);
         printf("%d ", current_node_ptr -> value);
@@ -266,7 +269,7 @@ void inOrderPrint(node_ptr current_node_ptr)
 
 void postOrderPrint(node_ptr current_node_ptr)
 {
-    if(current_node_ptr)
+    if(!EXCEED_THE_TREE(current_node_ptr))
     {
         preOrderPrint(current_node_ptr -> left);
         preOrderPrint(current_node_ptr -> right);
@@ -274,7 +277,34 @@ void postOrderPrint(node_ptr current_node_ptr)
     }
 }
 
-void delNode(node_ptr to_del, node_ptr current_node_ptr)
+void delNode(node_ptr to_del, node_ptr current_node_ptr, node_ptr parent_node_ptr)
 {
+    if(EXCEED_THE_TREE(current_node_ptr))
+    {
+        printf("There is no node to delete...\n\n");
+        return;
+    }
+    
+    if(FOUND_DATA(to_del, current_node_ptr))
+    {
+        if(THIS_NODE_IS_LEAF(current_node_ptr))
+        {
+            if(!CURRENT_NODE_IS_BIGGER(current_node_ptr, parent_node_ptr)) parent_node_ptr -> left = NULL;
+            else parent_node_ptr -> right = NULL;
+        }
+        // if to delete node has only left child
+        else if(!LEFT_IS_EMPTY(current_node_ptr) && RIGHT_IS_EMPTY(current_node_ptr))
+        {
+            if(!CURRENT_NODE_IS_BIGGER(current_node_ptr, parent_node_ptr)) parent_node_ptr -> left = current_node_ptr -> left;
+            else parent_node_ptr -> right = current_node_ptr -> left;
+        }
+        // if to delete node has only right child
+        else if(LEFT_IS_EMPTY(current_node_ptr) && !RIGHT_IS_EMPTY(current_node_ptr))
+        {
+            if(!CURRENT_NODE_IS_BIGGER(current_node_ptr, parent_node_ptr)) parent_node_ptr -> left = current_node_ptr -> right;
+            else parent_node_ptr -> right = current_node_ptr -> right;
+        }
+    }
+    
     
 }
