@@ -47,7 +47,7 @@ void postOrderPrint(node_ptr current_node_ptr);
 void delNode(node_ptr to_del, node_ptr tree);
 node_ptr searchByPre(node_ptr to_find, node_ptr current_node_ptr, node_ptr *parent_node_ptr, int *level);
 
-int main(void)
+main(void)
 {
     int choice, tmp, mode, level;
     char *str1 = "Preorder";
@@ -155,13 +155,14 @@ int main(void)
                 
                 break;
                 
+            case 7:
+                printf("\nBye!\n\n");
+                return;
             default:
                 printf("Wrong Choice.\n\n");
             
         }
     }
-    
-    return 0;
 }
 
 node_ptr initTree(node_ptr root)
