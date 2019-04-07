@@ -4,7 +4,7 @@
 
 #define TRUE 1
 #define FALSE 0
-#define MAX_STR_LEN 50
+#define MAX_STR_LEN 20
 #define COUNT 10
 #define MAX_TREE_HEIGHT 3
 
@@ -31,13 +31,21 @@ typedef struct _node{
 node_ptr initTree();
 void addNodeWithThisValue(node_ptr to_be_added_node, node_ptr current_node_ptr);     //why returns node_ptr??
 void printTreeIn2D(node_ptr root, int space);
+void retrieve(node_ptr current_node_ptr, int mode);
 void preOrderPrint(node_ptr current_node_ptr);
+void inOrderPrint(node_ptr current_node_ptr);
+void postOrderPrint(node_ptr current_node_ptr);
 void deleteTree(int data, node_ptr root);
 int searchByPre(node_ptr to_find, node_ptr current_node_ptr, int level);
 
 int main(void)
 {
-    int choice, tmp;
+    int choice, tmp, mode;
+    char *str1 = "Preorder";
+    char *str2 = "Inorder";
+    char *str3 = "Postorder";
+    char *tmp_str;
+    
     node_ptr root = NULL;
     node_ptr tmp_node;
 
@@ -86,9 +94,25 @@ int main(void)
                 break;
                 
             case 4:
-                printf("\n=============== Retrieved ===============\n");
-                preOrderPrint(root);
-                printf("\n=========================================\n\n");
+                printf("\n=============== Select the mode ===============\n");
+                printf("1. %s\n2. %s\n3. %s\n\n", str1, str2, str3);
+                printf("Your Choice? ");
+                scanf("%d", &mode);
+                printf("\n===============================================\n\n");
+                
+                switch(mode)
+                {
+                    case 1 : tmp_str = str1; break;
+                    case 2 : tmp_str = str2; break;
+                    case 3 : tmp_str = str3; break;
+                    default : printf("Wrong Choice.\n\n"); mode = FALSE;
+                }
+                
+                if(mode == FALSE) break;
+
+                printf("\n=============== Retrieved by %s ===============\n", tmp_str);
+                retrieve(root, mode);
+                printf("\n======================================================\n\n");
                 
                 break;
                 
@@ -107,7 +131,7 @@ int main(void)
                 break;
                 
             default:
-                printf("Wrong Choice.\n");
+                printf("Wrong Choice.\n\n");
             
         }
     }
@@ -159,32 +183,6 @@ int searchByPre(node_ptr to_find, node_ptr current_node_ptr, int level)
     return 0;
 }
 
-// node_ptr insertNodeWithThisValue(int to_insert, node_ptr current_node_ptr)       // parameter name changed : "root" to "current_node_ptr"  &  "data" to "to_insert"
-//                                                                                  // since you implement this function as recursive, you should named parameter as its role (please pay attention always)
-// {
-//     if(searchByPre(data, current_node_ptr))          // move this control statement to main function You should avoid using multiple searchByPre function SINCE this function(insertNodeWithThisValue) is recursive.
-//     {
-//         printf("ALREADY EXISTS...\n");
-//         return NULL;                 // if you don't have to return something, just give back nil(NULL)
-//     }
-//     else
-//     {
-//         if(!current_node_ptr)
-//         {
-//             root = (Node*)malloc(sizeof(Node));
-//             root->leftChild = root->rightChild = NULL;
-//             root->value = value;
-//             return root;
-//         }
-//         else
-//         {
-//             if(root -> value > value) root -> leftChild = insertTree(data, root -> left);
-//             else root -> rightChild = insertTree(data, root -> right);
-//         }
-//     }
-// }
-
-
 // 1. parameter name changed : "root" to "current_node_ptr"  &  "data" to "to_insert"
 //    since you implement this function as recursive, you should named parameter as its role (please pay attention always)
 // 2. avoid using search function in this function since this function is recursive (use it in main function)
@@ -213,25 +211,35 @@ void addNodeWithThisValue(node_ptr to_be_added_node, node_ptr current_node_ptr)
 
 void printTreeIn2D(node_ptr root, int space) 
 { 
-    // Base case 
+    // base case 
     if (root == NULL) return;
     int i;
   
-    // Increase distance between levels 
+    // increase distance between levels 
     space += COUNT;
   
-    // Process right child first 
+    // process right child first 
     printTreeIn2D(root -> right, space);
   
-    // Print current node after space 
-    // count
+    // print current node after space 
     printf("\n");
     for(i = COUNT; i < space; i++) printf(" ");
     printf("%d\n", root -> value);
   
-    // Process left child
+    // process left child
     printTreeIn2D(root -> left, space);
     
+}
+
+void retrieve(node_ptr current_node_ptr, int mode)
+{
+    switch(mode)
+    {
+        case 1 : preOrderPrint(current_node_ptr); break;
+        case 2 : inOrderPrint(current_node_ptr); break;
+        case 3 : postOrderPrint(current_node_ptr); break;
+        default : printf("Wrong choice...\n\n");
+    }
 }
 
 void preOrderPrint(node_ptr current_node_ptr)
@@ -242,9 +250,31 @@ void preOrderPrint(node_ptr current_node_ptr)
         preOrderPrint(current_node_ptr -> left);
         preOrderPrint(current_node_ptr -> right);
     }
+    
 }
 
-node_ptr delNode(int data, node_ptr root)
+void inOrderPrint(node_ptr current_node_ptr)
+{
+    if(current_node_ptr)
+    {
+        preOrderPrint(current_node_ptr -> left);
+        printf("%d ", current_node_ptr -> value);
+        preOrderPrint(current_node_ptr -> right);
+    }
+   
+}
+
+void postOrderPrint(node_ptr current_node_ptr)
+{
+    if(current_node_ptr)
+    {
+        preOrderPrint(current_node_ptr -> left);
+        preOrderPrint(current_node_ptr -> right);
+        printf("%d ", current_node_ptr -> value);
+    }
+}
+
+void delNode(node_ptr to_del, node_ptr current_node_ptr)
 {
     
 }
