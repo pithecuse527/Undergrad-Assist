@@ -36,8 +36,8 @@ void retrieve(node_ptr current_node_ptr, int mode);
 void preOrderPrint(node_ptr current_node_ptr);
 void inOrderPrint(node_ptr current_node_ptr);
 void postOrderPrint(node_ptr current_node_ptr);
-void deleteTree(int data, node_ptr root);
-node_ptr searchByPre(node_ptr to_find, node_ptr current_node_ptr, int *level);
+void delNode(node_ptr to_del, node_ptr tree);
+node_ptr searchByPre(node_ptr to_find, node_ptr current_node_ptr, node_ptr *parent_node_ptr, int *level);
 
 int main(void)
 {
@@ -48,7 +48,7 @@ int main(void)
     char *tmp_str;
     
     node_ptr root = NULL;
-    node_ptr tmp_node;
+    node_ptr tmp_node, tmp_parent_node;
 
     while(TRUE)
     {
@@ -79,9 +79,10 @@ int main(void)
                 printf("\n\n");
                 
                 level = 0;
-                if(searchByPre(tmp_node, root, &level))   // if the node already exist
+                tmp_parent_node = NULL;
+                if(searchByPre(tmp_node, root, &tmp_parent_node, &level))   // if the node already exist
                 {
-                    printf("Already Existed in level %d...\n\n", level);
+                    printf("Already Existed in level %d...\n", level);
                     
                     break;
                 }
@@ -118,6 +119,19 @@ int main(void)
                 
                 break;
                 
+            case 5:
+                tmp_node = NULL;
+                MALLOC(tmp_node, Node, sizeof(Node));
+                tmp_node -> left = tmp_node -> right = NULL;
+                
+                printf("Value : ");
+                scanf("%d", &(tmp_node -> value));
+                printf("\n\n");
+                
+                delNode(tmp_node, root);
+                
+                break;
+                
             case 6:
                 tmp_node = NULL;
                 MALLOC(tmp_node, Node, sizeof(Node));
@@ -127,7 +141,8 @@ int main(void)
                 scanf("%d", &(tmp_node -> value));
                 
                 level = 0;
-                if(searchByPre(tmp_node, root, &level)) printf("\nIt is in level %d\n\n", level);
+                tmp_parent_node = NULL;
+                if(searchByPre(tmp_node, root, &tmp_parent_node, &level)) printf("\nIt is in level %d\n\n", level);
                 else printf("Not found...\n\n");
                 
                 break;
@@ -169,9 +184,12 @@ node_ptr initTree(node_ptr root)
     return root;
 }
 
-node_ptr searchByPre(node_ptr to_find, node_ptr current_node_ptr, int *level)
+// 1. if the parameter does not work as a return value, deal it with double pointer to give back
+// 2. so, parent node pointer and level will be given by using pointer's attribute
+// 3. use *parent_node_ptr in delete function
+node_ptr searchByPre(node_ptr to_find, node_ptr current_node_ptr, node_ptr *parent_node_ptr, int *level)
 {
-    *level = *level + 1;
+    if(level) *level = *level + 1;
     
     if(EXCEED_THE_TREE(current_node_ptr)) return NULL;
     
@@ -179,8 +197,10 @@ node_ptr searchByPre(node_ptr to_find, node_ptr current_node_ptr, int *level)
     
     if(!THIS_NODE_IS_LEAF(current_node_ptr))
     {
-        if(CURRENT_NODE_IS_BIGGER(current_node_ptr, to_find)) return searchByPre(to_find, current_node_ptr -> left, level);
-        else return searchByPre(to_find, current_node_ptr -> right, level);
+        *parent_node_ptr = current_node_ptr;
+        
+        if(CURRENT_NODE_IS_BIGGER(current_node_ptr, to_find)) return searchByPre(to_find, current_node_ptr -> left, parent_node_ptr, level);
+        else return searchByPre(to_find, current_node_ptr -> right, parent_node_ptr, level);
     }
     
     return NULL;
@@ -212,6 +232,7 @@ void addNodeWithThisValue(node_ptr to_be_added_node, node_ptr current_node_ptr)
     return;
 }
 
+// print the tree in 2D
 void printTreeIn2D(node_ptr root, int space) 
 { 
     // base case 
@@ -277,34 +298,62 @@ void postOrderPrint(node_ptr current_node_ptr)
     }
 }
 
-void delNode(node_ptr to_del, node_ptr current_node_ptr, node_ptr parent_node_ptr)
+void delNode(node_ptr to_del, node_ptr tree)
 {
-    if(EXCEED_THE_TREE(current_node_ptr))
+    node_ptr parent_node_ptr = NULL;        // tracing
+    node_ptr current_node_ptr = searchByPre(to_del, tree, &parent_node_ptr, NULL);
+    node_ptr min_node_ptr = NULL;
+    
+    if(!current_node_ptr && to_del == tree)
     {
-        printf("There is no node to delete...\n\n");
+        printf("Cannot delete the node. It is root or never existed...\n\n");
         return;
     }
-    
-    if(FOUND_DATA(to_del, current_node_ptr))
+
+    if(THIS_NODE_IS_LEAF(current_node_ptr))
     {
-        if(THIS_NODE_IS_LEAF(current_node_ptr))
-        {
-            if(!CURRENT_NODE_IS_BIGGER(current_node_ptr, parent_node_ptr)) parent_node_ptr -> left = NULL;
-            else parent_node_ptr -> right = NULL;
-        }
-        // if to delete node has only left child
-        else if(!LEFT_IS_EMPTY(current_node_ptr) && RIGHT_IS_EMPTY(current_node_ptr))
-        {
-            if(!CURRENT_NODE_IS_BIGGER(current_node_ptr, parent_node_ptr)) parent_node_ptr -> left = current_node_ptr -> left;
-            else parent_node_ptr -> right = current_node_ptr -> left;
-        }
-        // if to delete node has only right child
-        else if(LEFT_IS_EMPTY(current_node_ptr) && !RIGHT_IS_EMPTY(current_node_ptr))
-        {
-            if(!CURRENT_NODE_IS_BIGGER(current_node_ptr, parent_node_ptr)) parent_node_ptr -> left = current_node_ptr -> right;
-            else parent_node_ptr -> right = current_node_ptr -> right;
-        }
+        if(!CURRENT_NODE_IS_BIGGER(current_node_ptr, parent_node_ptr)) parent_node_ptr -> left = NULL;
+        else parent_node_ptr -> right = NULL;
+        
     }
-    
-    
+    // if to delete node has only left child
+    else if(!LEFT_IS_EMPTY(current_node_ptr) && RIGHT_IS_EMPTY(current_node_ptr))
+    {
+        if(!CURRENT_NODE_IS_BIGGER(current_node_ptr, parent_node_ptr)) // which means current node is on the left of the parent
+            parent_node_ptr -> left = current_node_ptr -> left;
+        else                    // which means current node is on the right of the parent
+            parent_node_ptr -> right = current_node_ptr -> left;   
+    }
+    // if to delete node has only right child
+    else if(LEFT_IS_EMPTY(current_node_ptr) && !RIGHT_IS_EMPTY(current_node_ptr))
+    {
+        if(!CURRENT_NODE_IS_BIGGER(current_node_ptr, parent_node_ptr)) 
+            parent_node_ptr -> left = current_node_ptr -> right;
+        else 
+            parent_node_ptr -> right = current_node_ptr -> right;
+    }
+    // if to delete node has two child
+    else
+    {
+        node_ptr min_node_ptr = current_node_ptr -> right;
+        node_ptr min_node_parent = NULL;
+        
+        if(THIS_NODE_IS_LEAF(min_node_ptr))     // if minimum node has no child, just exchange. otherwise, it will cause logical error
+        {
+            current_node_ptr -> value = min_node_ptr -> value;
+            current_node_ptr -> right = NULL;
+        }
+        else
+        {
+            while(min_node_ptr -> left) min_node_ptr = min_node_ptr -> left;
+            
+            // Don't have any idea about tracing in this function yet
+            searchByPre(min_node_ptr, current_node_ptr, &min_node_parent, NULL);
+            
+            current_node_ptr -> value = min_node_ptr -> value;
+            min_node_parent -> left = min_node_ptr -> right;
+        }
+        
+    }
+
 }
