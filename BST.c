@@ -3,7 +3,7 @@
 //  Binary subtree basic implement
 //
 //  Created by Ji Hong Guen on 04/07/19.
-//  Copyright © 2018 Ji Hong Guen. All rights reserved.
+//  Copyright © 2019 Ji Hong Guen. All rights reserved.
 //
 
 #include <stdio.h>
