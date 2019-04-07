@@ -14,7 +14,7 @@
 
 #define LEFT_IS_EMPTY(nd) ( (nd) -> left ? 0 : 1 )
 #define RIGHT_IS_EMPTY(nd) ( (nd) -> right ? 0 : 1 )
-#define FOUND_DATA(dt, nd) ( (dt) == (nd) -> value ? 1 : 0 )
+#define FOUND_DATA(dt, nd) ( (dt) -> value == (nd) -> value ? 1 : 0 )
 
 #define MALLOC(mem, type, size)  if( !(mem = (type*)malloc(size)) ){\
                             fprintf(stderr, "Insufficient memory!");\
@@ -33,16 +33,17 @@ void addNodeWithThisValue(node_ptr to_be_added_node, node_ptr current_node_ptr);
 void printTreeIn2D(node_ptr root, int space);
 void preOrderPrint(node_ptr current_node_ptr);
 void deleteTree(int data, node_ptr root);
-node_ptr searchByPre(int to_find, node_ptr current_node_ptr);
+int searchByPre(node_ptr to_find, node_ptr current_node_ptr, int level);
 
 int main(void)
 {
-    int choice;
+    int choice, tmp;
     node_ptr root = NULL;
+    node_ptr tmp_node;
 
     while(TRUE)
     {
-        printf("1.Initiate\n2.Add\n3.Draw\n4.Retrieve\n5.Delete\n6.Exit\n");
+        printf("1.Initiate\n2.Add\n3.Draw\n4.Retrieve\n5.Delete\n6.Find\n7.Exit\n\n");
         printf("Your Choice? ");
         scanf("%d", &choice);
         
@@ -50,16 +51,17 @@ int main(void)
         {
             case 1:
                 root = initTree(root);
+                
                 break;
                 
             case 2:
                 if(!root)
                 {
                     printf("\n\n======= You must initiate first =======\n\n");
+                    
                     break;
                 }
-                
-                node_ptr tmp_node;
+                tmp_node = NULL;
                 MALLOC(tmp_node, Node, sizeof(Node));
                 tmp_node -> left = tmp_node -> right = NULL;
                 
@@ -67,17 +69,41 @@ int main(void)
                 scanf("%d", &(tmp_node -> value));
                 printf("\n\n");
                 
+                if(tmp = searchByPre(tmp_node, root, 1))   // if the node already exist
+                {
+                    printf("Already Existed in level %d...\n\n", tmp);
+                    
+                    break;
+                }
+                
                 addNodeWithThisValue(tmp_node, root);
+                
                 break;
             
             case 3:
                 printTreeIn2D(root, 3);
+                
                 break;
                 
             case 4:
                 printf("\n=============== Retrieved ===============\n");
                 preOrderPrint(root);
                 printf("\n=========================================\n\n");
+                
+                break;
+                
+            case 6:
+                tmp_node = NULL;
+                MALLOC(tmp_node, Node, sizeof(Node));
+                tmp_node -> left = tmp_node -> right = NULL;
+                
+                printf("Type the value of the node to find ");
+                scanf("%d", &(tmp_node -> value));
+                
+                tmp = searchByPre(tmp_node, root, 1);
+                if(tmp) printf("\nIt is in level %d\n\n", tmp);
+                else printf("Not found...\n\n");
+                
                 break;
                 
             default:
@@ -118,19 +144,19 @@ node_ptr initTree(node_ptr root)
     return root;
 }
 
-node_ptr searchByPre(int to_find, node_ptr current_node_ptr)
+int searchByPre(node_ptr to_find, node_ptr current_node_ptr, int level)
 {
-    node_ptr tmp = NULL;
+    if(!current_node_ptr) return 0;
     
-    if(FOUND_DATA(to_find, current_node_ptr)) return tmp = current_node_ptr;        // checks whether it founds data or not
+    if(FOUND_DATA(to_find, current_node_ptr)) return level;
     
-    if(!THIS_NODE_IS_LEAF(current_node_ptr))                                 // if current_node_ptr not points leaf
+    if(!THIS_NODE_IS_LEAF(current_node_ptr))
     {
-        tmp = searchByPre(to_find, current_node_ptr -> left);
-        if(!tmp) tmp = searchByPre(to_find, current_node_ptr -> right);
+        if(CURRENT_NODE_IS_BIGGER(current_node_ptr, to_find)) return searchByPre(to_find, current_node_ptr -> left, level + 1);
+        else return searchByPre(to_find, current_node_ptr -> right, level + 1);
     }
     
-    return tmp;
+    return 0;
 }
 
 // node_ptr insertNodeWithThisValue(int to_insert, node_ptr current_node_ptr)       // parameter name changed : "root" to "current_node_ptr"  &  "data" to "to_insert"
@@ -222,60 +248,3 @@ node_ptr delNode(int data, node_ptr root)
 {
     
 }
-
-
-
-////////////////////////////// Test Area //////////////////////////////
-// main()
-// {
-//     node_ptr test1;     // uses as a root
-//     node_ptr test2;
-//     node_ptr test3;
-//     node_ptr test4;
-//     node_ptr test5;
-//     node_ptr test6;
-//     node_ptr test7;
-//     node_ptr tmp;
-    
-//     MALLOC(test1, Node, sizeof(Node));
-//     MALLOC(test2, Node, sizeof(Node));
-//     MALLOC(test3, Node, sizeof(Node));
-//     MALLOC(test4, Node, sizeof(Node));
-//     MALLOC(test5, Node, sizeof(Node));
-//     MALLOC(test6, Node, sizeof(Node));
-//     MALLOC(test7, Node, sizeof(Node));
-    
-//     test1 -> left = test2;
-//     test1 -> right = test3;
-//     test1 -> value = 1;
-    
-//     test2 -> left = test4;
-//     test2 -> right = test5;
-//     test2 -> value = 2;
-    
-//     test3 -> left = test6;
-//     test3 -> right = test7;
-//     test3 -> value = 5;
-    
-//     test4 -> left = NULL;
-//     test4 -> right = NULL;
-//     test4 -> value = 7;
-    
-//     test5 -> left = NULL;
-//     test5 -> right = NULL;
-//     test5 -> value = 7;
-    
-//     test6 -> left = NULL;
-//     test6 -> right = NULL;
-//     test6 -> value = 6;
-    
-//     test7 -> left = NULL;
-//     test7 -> right = NULL;
-//     test7 -> value = 7;
-    
-//     tmp = searchByPre(7, test1);
-//     if(!tmp) printf("Not found\n");
-//     else printf("%d!!\n", tmp -> value);
-
-//}
-/////////////////////////////////////////////////////////////////////////
